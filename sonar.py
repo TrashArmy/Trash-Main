@@ -85,16 +85,25 @@ class Sonar:
       else:
          return None
 
-   def read_cm_avg(self, num, dt = 0.03):
+   def read_cm_avg(self, num, dt = 0.03, min = 2, max = 400):
       """
       Takes num readings with time dt between readings and converts to centimeters.
       """
       rtt = 0
+      vals = num
       for i in xrange(1, num):
-         rtt += self.read_cm()
+         r = self.read_cm()
+         if r > max or r < min:
+            vals -= 1
+         else:
+            rtt += r
+
          time.sleep(dt)
 
-      rtt = rtt/num
+      if vals < 1:
+         return None
+
+      rtt = rtt/vals
       return rtt
       #return (rtt/1000000.0)*34030
 
