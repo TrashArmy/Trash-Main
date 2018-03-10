@@ -4,12 +4,19 @@ Controls everything from here
 """
 import time
 import pigpio
+import MySQLdb
 import motor # motor controller
 import servo_HS805BB # servo controller
 #import light # light controller
 import sonar # ultrasonic sensor controller
 
 # Configuration
+MYSQL_HOST = '159.203.125.202'
+MYSQL_USER = 'remote'
+MYSQL_PASS = 'login'
+MYSQL_DB = 'SeniorDesign'
+MYSQL_PORT = 3306
+
 SERVO_1 = 0 # pin for servo 1
 SERVO_2 = 0 # pin for servo 2
 SERVO_3 = 0 # pin for servo 3
@@ -36,28 +43,35 @@ DOOR_SWITCH = 0 # pin for switch on door
 
 # Define functions
 
-def sonar_ping(s):
+def sonar_ping(s, cursor):
     #print(s.read())
     r = s.read_cm_avg(100, 0.05)
     if r >= SONAR_1_MAX:
-        printf('0%')
+        print('0%')
     elif r <= SONAR_1_MIN:
         print('100%')
     else:
         v = ((SONAR_1_MAX-r)/(SONAR_1_MAX-SONAR_1_MIN))*100
-        print('%d\%'.format(round(v)))
+        print('{}%'.format(round(v)))
 
 
 if __name__ == '__main__':
     # Initialization
     pi = pigpio.pi()
+    conn = MySQLdb.connect(host = MYSQL_HOST,
+                           user = MYSQL_USER,
+                           passwd = MYSQL_PASS,
+                           db = MYSQL_DB, 
+                           port = MYSQL_PORT)
+    cursor = conn.cursor()
+
 
     SONAR_1 = sonar.Sonar(pi, SONAR_1_TRIG, SONAR_1_ECHO)
 
     # Do stuff
     try:
         while(True):
-            sonar_ping(SONAR_1)
+            sonar_ping(SONAR_1, cursor)
             #print('loop!')
             #time.sleep(1)
             time.sleep(0.03)
