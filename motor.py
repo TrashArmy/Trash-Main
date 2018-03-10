@@ -24,12 +24,12 @@ class Motor:
         self.pin_fwd = pin_fwd
         self.pin_rev = pin_rev
 
-        // set initial conditions
+        # set initial conditions
         self._pwm = 0;
         self._fwd = 0;
         self._rev = 0;
 
-        // initialize fwd/rev/pwm pins and update
+        # initialize fwd/rev/pwm pins and update
         self.pi.set_mode(self.pin_fwd, pigpio.OUTPUT)
         self.pi.set_mode(self.pin_rev, pigpio.OUTPUT)
         self.pi.set_PWM_frequency(self.pin_pwm, 1000) // 1kHz
@@ -41,6 +41,9 @@ class Motor:
         Arguments:
             spd {float} -- number between -1 and 1 for relative speed of the motor
         """
+        if abs(spd) > 1:
+            spd = 0
+            
         self._fwd = (spd > 0.0)
         self._rev = (spd < 0.0)
         self._pwm = abs(spd)
@@ -64,7 +67,7 @@ class Motor:
         self.speed(0)
         self.pi.stop()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     m = Motor(18, 24, 25)
     m.speed(1)
     time.sleep(5)
