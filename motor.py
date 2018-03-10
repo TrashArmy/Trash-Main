@@ -32,7 +32,7 @@ class Motor:
         # initialize fwd/rev/pwm pins and update
         self.pi.set_mode(self.pin_fwd, pigpio.OUTPUT)
         self.pi.set_mode(self.pin_rev, pigpio.OUTPUT)
-        self.pi.set_PWM_frequency(self.pin_pwm, 1000) // 1kHz
+        self.pi.set_PWM_frequency(self.pin_pwm, 1000) # 1kHz
         self.update()
 
     def speed(self, spd):
