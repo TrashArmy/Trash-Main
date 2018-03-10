@@ -7,8 +7,8 @@ import pigpio
 import time
 
 class Servo_HS805BB:
-    def __init__(self, pin_pwm):
-        self.pi = pigpio.pi()
+    def __init__(self, pi, pin_pwm):
+        self.pi = pi
 
         if not self.pi.connected:
            exit()
@@ -50,9 +50,11 @@ class Servo_HS805BB:
 
     def __delete__(self):
         self.pi.set_servo_pulsewidth(self.pin_pwm, 0) # turn off servo
-        self.pi.stop()
+
 
 if __name__ == '__main__':
+    pi = pigpio.pi()
+
     s = Servo_HS805BB(18)
     s.degree(45)
     time.sleep(2)
@@ -64,3 +66,5 @@ if __name__ == '__main__':
     time.sleep(2)
     s.degree(0)
     time.sleep(4)
+
+    pi.stop()

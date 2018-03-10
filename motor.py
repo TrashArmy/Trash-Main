@@ -7,7 +7,7 @@ import pigpio
 import time
 
 class Motor:
-    def __init__(self, pin_pwm, pin_fwd, pin_rev):
+    def __init__(self, pi, pin_pwm, pin_fwd, pin_rev):
         """Initialize the motor controller
         
         Arguments:
@@ -15,7 +15,7 @@ class Motor:
             pin_fwd {int} -- GPIO pin connected to FWD control
             pin_rev {int} -- GPIO pin connected to REV control
         """
-        self.pi = pigpio.pi()
+        self.pi = pi
 
         if not self.pi.connected:
            exit()
@@ -65,10 +65,12 @@ class Motor:
 
     def __delete__(self):
         self.speed(0)
-        self.pi.stop()
+
 
 if __name__ == '__main__':
-    m = Motor(18, 24, 25)
+    pi = pigpio.pi()
+
+    m = Motor(pi, 18, 24, 25)
     m.speed(1)
     time.sleep(5)
     m.speed(-1)
@@ -79,3 +81,5 @@ if __name__ == '__main__':
     time.sleep(5)
     m.speed(-0.5)
     time.sleep(10)
+
+    pi.stop()
