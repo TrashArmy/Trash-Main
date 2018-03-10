@@ -3,9 +3,10 @@
 Controls everything from here
 """
 import time
+import pigpio
 import motor # motor controller
 import servo_HS805BB # servo controller
-import light # light controller
+#import light # light controller
 import sonar # ultrasonic sensor controller
 
 # Configuration
@@ -41,7 +42,7 @@ if __name__ == '__main__':
     # Initialization
     pi = pigpio.pi()
 
-    SONAR_1 = Sonar(pi, 20, 21)
+    SONAR_1 = sonar.Sonar(pi, 20, 21)
 
     # Do stuff
     try:

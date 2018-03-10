@@ -94,7 +94,7 @@ class Sonar:
       for i in xrange(1, num):
          r = self.read()
          if r:
-            rtt += read()
+            rtt += r
          else:
             vals -= 1
 
