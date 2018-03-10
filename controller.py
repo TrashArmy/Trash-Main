@@ -35,7 +35,8 @@ DOOR_SWITCH = 0 # pin for switch on door
 # Define functions
 
 def sonar_ping(s):
-   print(s.read_cm_avg(200, 0.05))
+    #print(s.read())
+    print(s.read_cm_avg(100, 0.05))
 
 
 if __name__ == '__main__':
