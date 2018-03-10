@@ -59,13 +59,14 @@ def sonar_ping(id, s, conn, dmin, dmax):
     print('{}%'.format(p))
 
     cursor = conn.cursor()
-    sql = "INSERT INTO {0} VALUES({1}, {2}, GETDATE(), {3});".format(
+    sql = "INSERT INTO {0} VALUES({1}, {2}, NOW(), {3}, 0);".format(
           MYSQL_TABLE, TRASH_ID, id, p)
     try:
         cursor.execute(sql);
         conn.commit()
     except:
-        conn.rollback()
+       print('insert failed');
+       conn.rollback()
 
 # Main 
 
