@@ -89,20 +89,14 @@ class Sonar:
       """
       Takes num readings with time dt between readings and converts to centimeters.
       """
-      vals = num
       rtt = 0
       for i in xrange(1, num):
-         r = self.read()
-         if r:
-            rtt += r
-         else:
-            vals -= 1
+         rtt += self.read_cm()
+         time.sleep(dt)
 
-      if not vals:
-         return None
-
-      rtt = rtt/vals
-      return (rtt/1000000.0)*34030
+      rtt = rtt/num
+      return rtt
+      #return (rtt/1000000.0)*34030
 
 
    def cancel(self):

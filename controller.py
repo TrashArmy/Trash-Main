@@ -35,20 +35,22 @@ DOOR_SWITCH = 0 # pin for switch on door
 # Define functions
 
 def sonar_ping(s):
-   print(s.read_cm_avg(100))
+   print(s.read_cm_avg(200, 0.05))
 
 
 if __name__ == '__main__':
     # Initialization
     pi = pigpio.pi()
 
-    SONAR_1 = sonar.Sonar(pi, 20, 21)
+    SONAR_1 = sonar.Sonar(pi, SONAR_1_TRIG, SONAR_1_ECHO)
 
     # Do stuff
     try:
         while(True):
             sonar_ping(SONAR_1)
-            time.sleep(1)
+            #print('loop!')
+            #time.sleep(1)
+            time.sleep(0.03)
     except KeyboardInterrupt:
         SONAR_1.cancel()
 
