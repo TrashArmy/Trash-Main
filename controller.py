@@ -56,7 +56,7 @@ def sonar_ping(id, s, conn, dmin, dmax):
     else:
         p = round(((dmax-r)/(dmax-dmin))*100)
     
-    print('{}%'.format(p))
+    print('id: {}, fill: {}%'.format(id, p))
 
     cursor = conn.cursor()
     sql = "INSERT INTO {0} VALUES({1}, {2}, NOW(), {3}, 0);".format(
@@ -79,23 +79,27 @@ if __name__ == '__main__':
                            db = MYSQL_DB, 
                            port = MYSQL_PORT)
 
-    if not pi:
-        printf('pi not initializing')
+    if not pi.connected:
+        printf('Raspberry Pi not connecting')
         exit()
 
     if not conn:
-        printf('mySQL not connecting')
+        printf('MySQL not connecting')
         exit()
 
     SONAR_0 = sonar.Sonar(pi, SONAR_0_TRIG, SONAR_0_ECHO)
+    #SONAR_1 = sonar.Sonar(pi, SONAR_1_TRIG, SONAR_1_ECHO)
+    #SONAR_2 = sonar.Sonar(pi, SONAR_2_TRIG, SONAR_2_ECHO)
+    #SONAR_3 = sonar.Sonar(pi, SONAR_3_TRIG, SONAR_3_ECHO)
 
     # Do stuff
     try:
         while(True):
             sonar_ping(0, SONAR_0, conn, SONAR_0_MIN, SONAR_0_MAX)
+            sonar_ping(1, SONAR_0, conn, SONAR_0_MIN, SONAR_0_MAX)
+            sonar_ping(2, SONAR_0, conn, SONAR_0_MIN, SONAR_0_MAX)
+            sonar_ping(3, SONAR_0, conn, SONAR_0_MIN, SONAR_0_MAX)
             #print('loop!')
-            #time.sleep(1)
-            time.sleep(0.03)
     except KeyboardInterrupt:
         SONAR_0.cancel()
 
