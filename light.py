@@ -4,6 +4,8 @@ Initialize the NeoPixel light and turn it on or off with any color of your
 choosing. See the 'main' portion for a simple example.
 """
 
+import sys
+sys.path.insert(0, './rpi_ws281x/python/')
 from neopixel import *
 import time
 
@@ -68,7 +70,7 @@ class Light:
 
 
 if __name__ == '__main__':
-    lh = Light()
+    lh = Light(18)
     print('Lighting NeoPixel...')
     lh.on()
     time.sleep(2)
