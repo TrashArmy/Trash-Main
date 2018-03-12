@@ -26,13 +26,13 @@ class Servo_HS805BB:
         self._pulsewidth = self._center
         self.degree(0)
 
-    @property
-    def degree(self):
-        return pw_to_d(self._pulsewidth)
+    #@property
+    #def degree(self):
+    #    return self.pw_to_d(self._pulsewidth)
 
-    @degree.setter
+    #@degree.setter
     def degree(self, angle):
-        self._pulsewidth = d_to_pw(angle)
+        self._pulsewidth = self.d_to_pw(angle)
         self.pi.set_servo_pulsewidth(self.pin_pwm, self._pulsewidth)
 
     def d_to_pw(self, angle):
@@ -55,7 +55,7 @@ class Servo_HS805BB:
 if __name__ == '__main__':
     pi = pigpio.pi()
 
-    s = Servo_HS805BB(18)
+    s = Servo_HS805BB(pi, 19)
     s.degree(45)
     time.sleep(2)
     s.degree(90)
