@@ -54,17 +54,21 @@ class Servo_HS805BB:
 
 if __name__ == '__main__':
     pi = pigpio.pi()
+    while(True):
+        s = Servo_HS805BB(pi, 26)
+    #s.degree(45)
+    #time.sleep(2)
+    #s.degree(90)
+    #time.sleep(2)
+    #s.degree(-90)
+    #time.sleep(4)
+    #s.degree(-45)
+    #time.sleep(2)
+        s.degree(-45)
+        time.sleep(4)
+        s.degree(73)
+        time.sleep(4)
 
-    s = Servo_HS805BB(pi, 19)
-    s.degree(45)
-    time.sleep(2)
-    s.degree(90)
-    time.sleep(2)
-    s.degree(-90)
-    time.sleep(4)
-    s.degree(-45)
-    time.sleep(2)
-    s.degree(0)
-    time.sleep(4)
+    
 
     pi.stop()

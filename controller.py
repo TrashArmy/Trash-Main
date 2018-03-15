@@ -7,7 +7,7 @@ import pigpio
 import MySQLdb
 import motor # motor controller
 import servo_HS805BB # servo controller
-#import light # light controller
+import light # light controller
 import sonar # ultrasonic sensor controller
 
 # Configuration

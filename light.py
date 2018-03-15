@@ -35,7 +35,7 @@ class Light:
         self._num_pixels = self.light_handle.numPixels()
 
         # Set default color
-        self._color = Color(255, 255, 255)
+        self._color = Color(127, 150, 127)
 
     @property
     def color(self):
@@ -73,6 +73,6 @@ if __name__ == '__main__':
     lh = Light(18)
     print('Lighting NeoPixel...')
     lh.on()
-    time.sleep(2)
+    time.sleep(10)
     print('Turning off NeoPixel...')
     lh.off()
