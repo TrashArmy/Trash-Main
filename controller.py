@@ -5,10 +5,11 @@ Controls everything from here
 import time
 import pigpio
 import MySQLdb
-import motor # motor controller
-import servo_HS805BB # servo controller
-import light # light controller
-import sonar # ultrasonic sensor controller
+import motor  # motor controller
+import servo_HS805BB  # servo controller
+import light  # light controller
+import sonar  # ultrasonic sensor controller
+import switch  # switch controller
 
 # Configuration
 MYSQL_HOST = '159.203.125.202'
@@ -18,30 +19,53 @@ MYSQL_DB = 'SeniorDesign'
 MYSQL_PORT = 3306
 MYSQL_TABLE = 'TrashData'
 
-TRASH_ID = 0 # id of trashcan
+TRASHCAN_ID = 0  # id of trashcan
 
-SERVO_1 = 0 # pin for servo 1
-SERVO_2 = 0 # pin for servo 2
-SERVO_3 = 0 # pin for servo 3
+SERVO_EN = True
+ACTUATOR_EN = True
+LIGHT_EN = True
+SONAR_EN = True
+DOOR_SWITCH_EN = True
 
-ACTUATOR_PWM = 0 # pin for speed control of linear actuator
-ACTUATOR_FWD = 0 # pin for fwd control of linear actuator
-ACTUATOR_REV = 0 # pin for rev control of linear actuator
+SERVO_0_PWM = 0  # pin for servo 0
+SERVO_0_CLOSE = 73  # angle at which flap 0 is closed
+SERVO_0_OPEN = -45  # angle at which flap 0 is opened
 
-LIGHT = 0 # pin for light
+SERVO_1_PWM = 0  # pin for servo 1
+SERVO_1_CLOSE = 73  # angle at which flap 1 is closed
+SERVO_1_OPEN = -45  # angle at which flap 1 is opened
 
-SONAR_0_ECHO = 20 # pin for sonar sensor 1 echo
-SONAR_0_TRIG = 21 # pin for sonar sensor 1 trigger
-SONAR_0_MIN = 6 # min distance for 100% [cm]
-SONAR_0_MAX = 25 # max distance for 0% [cm]
-SONAR_1_ECHO = 0 # pin for sonar sensor 2 echo
-SONAR_1_TRIG = 0 # pin for sonar sensor 2 trigger
-SONAR_2_ECHO = 0 # pin for sonar sensor 3 echo
-SONAR_2_TRIG = 0 # pin for sonar sensor 3 trigger
-SONAR_3_ECHO = 0 # pin for sonar sensor 4 echo
-SONAR_3_TRIG = 0 # pin for sonar sensor 4 trigger
+SERVO_2_PWM = 0  # pin for servo 2
+SERVO_2_CLOSE = 73  # angle at which flap 2 is closed
+SERVO_2_OPEN = -45  # angle at which flap 2 is opened
 
-DOOR_SWITCH = 0 # pin for switch on door
+ACTUATOR_PWM = 0  # pin for speed control of linear actuator
+ACTUATOR_FWD = 0  # pin for fwd control of linear actuator
+ACTUATOR_REV = 0  # pin for rev control of linear actuator
+
+LIGHT_PIN = 0  # pin for light
+
+SONAR_0_ECHO = 20  # pin for sonar sensor 1 echo
+SONAR_0_TRIG = 21  # pin for sonar sensor 1 trigger
+SONAR_0_MIN = 6  # min distance for 100% [cm]
+SONAR_0_MAX = 25  # max distance for 0% [cm]
+
+SONAR_1_ECHO = 0  # pin for sonar sensor 2 echo
+SONAR_1_TRIG = 0  # pin for sonar sensor 2 trigger
+SONAR_1_MIN = 6  # min distance for 100% [cm]
+SONAR_1_MAX = 25  # max distance for 0% [cm]
+
+SONAR_2_ECHO = 0  # pin for sonar sensor 3 echo
+SONAR_2_TRIG = 0  # pin for sonar sensor 3 trigger
+SONAR_2_MIN = 6  # min distance for 100% [cm]
+SONAR_2_MAX = 25  # max distance for 0% [cm]
+
+SONAR_3_ECHO = 0  # pin for sonar sensor 4 echo
+SONAR_3_TRIG = 0  # pin for sonar sensor 4 trigger
+SONAR_3_MIN = 6  # min distance for 100% [cm]
+SONAR_3_MAX = 25  # max distance for 0% [cm]
+
+DOOR_SWITCH_PIN = 0  # pin for switch on door
 
 
 # Define functions
@@ -55,55 +79,128 @@ def sonar_ping(id, s, conn, dmin, dmax):
         p = 100
     else:
         p = round(((dmax-r)/(dmax-dmin))*100)
-    
+
     print('id: {}, fill: {}%'.format(id, p))
 
     cursor = conn.cursor()
     sql = "INSERT INTO {0} VALUES({1}, {2}, NOW(), {3}, 0);".format(
-          MYSQL_TABLE, TRASH_ID, id, p)
+          MYSQL_TABLE, TRASHCAN_ID, id, p)
     try:
-        cursor.execute(sql);
+        cursor.execute(sql)
         conn.commit()
     except:
-       print('insert failed');
-       conn.rollback()
+        print('insert failed')
+        conn.rollback()
 
-# Main 
+# Main
 
 if __name__ == '__main__':
     # Initialization
     pi = pigpio.pi()
-    conn = MySQLdb.connect(host = MYSQL_HOST,
-                           user = MYSQL_USER,
-                           passwd = MYSQL_PASS,
-                           db = MYSQL_DB, 
-                           port = MYSQL_PORT)
+    conn = MySQLdb.connect(host=MYSQL_HOST,
+                           user=MYSQL_USER,
+                           passwd=MYSQL_PASS,
+                           db=MYSQL_DB,
+                           port=MYSQL_PORT)
 
     if not pi.connected:
-        printf('Raspberry Pi not connecting')
+        print('Raspberry Pi not connecting')
         exit()
 
     if not conn:
-        printf('MySQL not connecting')
+        print('MySQL not connecting')
         exit()
 
-    SONAR_0 = sonar.Sonar(pi, SONAR_0_TRIG, SONAR_0_ECHO)
-    #SONAR_1 = sonar.Sonar(pi, SONAR_1_TRIG, SONAR_1_ECHO)
-    #SONAR_2 = sonar.Sonar(pi, SONAR_2_TRIG, SONAR_2_ECHO)
-    #SONAR_3 = sonar.Sonar(pi, SONAR_3_TRIG, SONAR_3_ECHO)
+    if DOOR_SWITCH_EN:
+        DOOR_SWITCH = switch.Switch(pi, DOOR_SWITCH_PIN)
+
+    if SERVO_EN:
+        SERVO_0 = servo_HS805BB.Servo_HS805BB(pi, SERVO_0_PWM)
+        SERVO_1 = servo_HS805BB.Servo_HS805BB(pi, SERVO_1_PWM)
+        SERVO_2 = servo_HS805BB.Servo_HS805BB(pi, SERVO_2_PWM)
+
+        SERVO_0.degree(SERVO_0_CLOSE)
+        SERVO_1.degree(SERVO_1_CLOSE)
+        SERVO_2.degree(SERVO_2_CLOSE)
+
+    if ACTUATOR_EN:
+        ACTUATOR = motor.Motor(pi, ACTUATOR_PWM, ACTUATOR_FWD, ACTUATOR_REV)
+        ACTUATOR.speed(0)
+
+    if SONAR_EN:
+        SONAR_0 = sonar.Sonar(pi, SONAR_0_TRIG, SONAR_0_ECHO)
+        SONAR_1 = sonar.Sonar(pi, SONAR_1_TRIG, SONAR_1_ECHO)
+        SONAR_2 = sonar.Sonar(pi, SONAR_2_TRIG, SONAR_2_ECHO)
+        SONAR_3 = sonar.Sonar(pi, SONAR_3_TRIG, SONAR_3_ECHO)
 
     # Do stuff
     try:
         while(True):
-            sonar_ping(0, SONAR_0, conn, SONAR_0_MIN, SONAR_0_MAX)
-            sonar_ping(1, SONAR_0, conn, SONAR_0_MIN, SONAR_0_MAX)
-            sonar_ping(2, SONAR_0, conn, SONAR_0_MIN, SONAR_0_MAX)
-            sonar_ping(3, SONAR_0, conn, SONAR_0_MIN, SONAR_0_MAX)
-            #print('loop!')
+            if DOOR_SWITCH_EN:
+                while(not DOOR_SWITCH.toggled()):
+                    time.sleep(0.100)  # sleep 100 ms
+
+            # Front door opened and closed; assume trash is on platform, and
+            # begin computer vision algorithm below.
+
+            # Algorithm should include the following for the light:
+            #     import light
+            #     LIGHT = light.Light(LIGHT_PIN)
+            #     LIGHT.on()
+            #     # do something
+            #     LIGHT.off()
+            # At this point in the controller, we should be able to call
+            # the alogirthm like this:
+            # trash_id = algorithm()  # should return a 0, 1, 2, or 3
+            trash_id = 0
+
+            # Now that the trash is identified, open the correct flap.
+            if SERVO_EN:
+                if (trash_id == 0):
+                    SERVO_0.degree(SERVO_0_OPEN)
+                elif (trash_id == 1):
+                    SERVO_1.degree(SERVO_1_OPEN)
+                elif (trash_id == 2):
+                    SERVO_2.degree(SERVO_2_OPEN)
+
+                # do nothing for id 3, trash would fall into hole
+
+            # Correct flap is opened, now it's time to drop the trash
+            if ACTUATOR_EN:
+                ACTUATOR.speed(1)  # drop platform
+                time.sleep(5)  # wait five seconds
+                ACTUATOR.speed(-1)  # close platform
+                # time.sleep(5)
+                # ACTUATOR.speed(0)
+
+            # Trash dropped, wait for trash to fall into hole and close flap
+            if SERVO_EN:
+                if (trash_id == 0):
+                    time.sleep(2)
+                    SERVO_0.degree(SERVO_0_CLOSE)
+                elif (trash_id == 1):
+                    time.sleep(4)
+                    SERVO_1.degree(SERVO_1_CLOSE)
+                elif (trash_id == 2):
+                    time.sleep(6)
+                    SERVO_2.degree(SERVO_2_CLOSE)
+
+            # Check fullness of bins before restarting loop
+            if SONAR_EN:
+                if (trash_id == 0):
+                    sonar_ping(0, SONAR_0, conn, SONAR_0_MIN, SONAR_0_MAX)
+                elif (trash_id == 1):
+                    sonar_ping(1, SONAR_1, conn, SONAR_1_MIN, SONAR_1_MAX)
+                elif (trash_id == 2):
+                    sonar_ping(2, SONAR_2, conn, SONAR_2_MIN, SONAR_2_MAX)
+                else:
+                    sonar_ping(3, SONAR_3, conn, SONAR_3_MIN, SONAR_3_MAX)
     except KeyboardInterrupt:
-        SONAR_0.cancel()
-
-
+        if SONAR_EN:
+            SONAR_0.cancel()
+            SONAR_1.cancel()
+            SONAR_2.cancel()
+            SONAR_3.cancel()
 
     conn.close()
-    # pi.stop()
+    pi.stop()

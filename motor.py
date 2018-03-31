@@ -1,10 +1,12 @@
 """Motor controller for simple H-bridge
 
-Initializes PWM on a particular pin and moves the motor forward or in reverse at a particular speed
+Initializes PWM on a particular pin and moves the motor forward or in reverse
+at a particular speed
 """
 
 import pigpio
 import time
+
 
 class Motor:
     def __init__(self, pi, pin_pwm, pin_fwd, pin_rev):
@@ -18,32 +20,33 @@ class Motor:
         self.pi = pi
 
         if not self.pi.connected:
-           exit()
+            exit()
 
         self.pin_pwm = pin_pwm
         self.pin_fwd = pin_fwd
         self.pin_rev = pin_rev
 
         # set initial conditions
-        self._pwm = 0;
-        self._fwd = 0;
-        self._rev = 0;
+        self._pwm = 0
+        self._fwd = 0
+        self._rev = 0
 
         # initialize fwd/rev/pwm pins and update
         self.pi.set_mode(self.pin_fwd, pigpio.OUTPUT)
         self.pi.set_mode(self.pin_rev, pigpio.OUTPUT)
-        self.pi.set_PWM_frequency(self.pin_pwm, 1000) # 1kHz
+        self.pi.set_PWM_frequency(self.pin_pwm, 1000)  # 1kHz
         self.update()
 
     def speed(self, spd):
         """Set the relative speed of the motor
-        
+
         Arguments:
-            spd {float} -- number between -1 and 1 for relative speed of the motor
+            spd {float} -- number between -1 and 1 for relative speed of the
+                           motor
         """
         if abs(spd) > 1:
             spd = 0
-            
+
         self._fwd = (spd > 0.0)
         self._rev = (spd < 0.0)
         self._pwm = abs(spd)
@@ -58,7 +61,8 @@ class Motor:
         self.pi.write(self.pin_fwd, self._fwd)
         self.pi.write(self.pin_rev, self._rev)
 
-        if self.pi.read(self.pin_fwd) == self._fwd and self.pi.read(self.pin_rev) == self._rev:
+        if (self.pi.read(self.pin_fwd) == self._fwd and
+           self.pi.read(self.pin_rev) == self._rev):
             return True
         else:
             return False
