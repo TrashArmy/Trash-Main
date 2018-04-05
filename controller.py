@@ -5,9 +5,13 @@ Controls everything from here
 import time
 import pigpio
 import MySQLdb
+# if not found, do:
+# sudo apt-get install mysql-server
+# sudo apt-get install mysql-client
+# sudo apt-get install python-mysqldb
 import motor  # motor controller
 import servo_HS805BB  # servo controller
-import light  # light controller
+#import light  # light controller
 import sonar  # ultrasonic sensor controller
 import switch  # switch controller
 
@@ -21,23 +25,23 @@ MYSQL_TABLE = 'TrashData'
 
 TRASHCAN_ID = 0  # id of trashcan
 
-SERVO_EN = True
-ACTUATOR_EN = True
-LIGHT_EN = True
-SONAR_EN = True
+SERVO_EN = False
+ACTUATOR_EN = False
+LIGHT_EN = False
+SONAR_EN = False
 DOOR_SWITCH_EN = True
 
-SERVO_0_PWM = 0  # pin for servo 0
+SERVO_0_PWM = 22  # pin for servo 0
 SERVO_0_CLOSE = 73  # angle at which flap 0 is closed
 SERVO_0_OPEN = -45  # angle at which flap 0 is opened
 
-SERVO_1_PWM = 0  # pin for servo 1
+SERVO_1_PWM = 27  # pin for servo 1
 SERVO_1_CLOSE = 73  # angle at which flap 1 is closed
 SERVO_1_OPEN = -45  # angle at which flap 1 is opened
 
 SERVO_2_PWM = 0  # pin for servo 2
-SERVO_2_CLOSE = 73  # angle at which flap 2 is closed
-SERVO_2_OPEN = -45  # angle at which flap 2 is opened
+SERVO_2_CLOSE = 20  # angle at which flap 2 is closed
+SERVO_2_OPEN = -75  # angle at which flap 2 is opened
 
 ACTUATOR_PWM = 0  # pin for speed control of linear actuator
 ACTUATOR_FWD = 0  # pin for fwd control of linear actuator
@@ -65,7 +69,7 @@ SONAR_3_TRIG = 0  # pin for sonar sensor 4 trigger
 SONAR_3_MIN = 6  # min distance for 100% [cm]
 SONAR_3_MAX = 25  # max distance for 0% [cm]
 
-DOOR_SWITCH_PIN = 0  # pin for switch on door
+DOOR_SWITCH_PIN = 26  # pin for switch on door
 
 
 # Define functions
@@ -113,6 +117,7 @@ if __name__ == '__main__':
 
     if DOOR_SWITCH_EN:
         DOOR_SWITCH = switch.Switch(pi, DOOR_SWITCH_PIN)
+        
 
     if SERVO_EN:
         SERVO_0 = servo_HS805BB.Servo_HS805BB(pi, SERVO_0_PWM)
@@ -139,6 +144,7 @@ if __name__ == '__main__':
             if DOOR_SWITCH_EN:
                 while(not DOOR_SWITCH.toggled()):
                     time.sleep(0.100)  # sleep 100 ms
+            print('Door toggled')
 
             # Front door opened and closed; assume trash is on platform, and
             # begin computer vision algorithm below.
@@ -152,7 +158,7 @@ if __name__ == '__main__':
             # At this point in the controller, we should be able to call
             # the alogirthm like this:
             # trash_id = algorithm()  # should return a 0, 1, 2, or 3
-            trash_id = 0
+            trash_id = 1
 
             # Now that the trash is identified, open the correct flap.
             if SERVO_EN:

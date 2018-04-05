@@ -91,7 +91,7 @@ class Sonar:
       """
       rtt = 0
       vals = num
-      for i in xrange(1, num):
+      for i in range(1, num):
          r = self.read_cm()
          if r > max or r < min:
             vals -= 1
@@ -123,8 +123,10 @@ class Sonar:
 if __name__ == "__main__":
    pi = pigpio.pi()
 
-   s = Sonar(pi, 23, 18)
-   print(s.read_cm_avg(100))
+   s = Sonar(pi, 20, 21)
+   while(True):
+       print(s.read_cm())
+       time.sleep(0.2)
    sonar.cancel()
    
    pi.stop()

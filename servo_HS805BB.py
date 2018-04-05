@@ -43,6 +43,8 @@ class Servo_HS805BB:
     def pw_to_d(self, pulsewidth):
         angle = ((pulsewidth-self._center)/self._width)*self._angle
         return angle
+    def off (self):
+        self.pi.set_servo_pulsewidth(self.pin_pwm, 0)  # turn off servo
 
     def __delete__(self):
         self.pi.set_servo_pulsewidth(self.pin_pwm, 0)  # turn off servo
@@ -51,10 +53,12 @@ class Servo_HS805BB:
 if __name__ == '__main__':
     pi = pigpio.pi()
     while(True):
-        s = Servo_HS805BB(pi, 26)
-        s.degree(-45)
+        s = Servo_HS805BB(pi, 27)
+        s.degree(-75)
         time.sleep(4)
-        s.degree(73)
+        s.degree(20)
+        time.sleep(2)
+        s.off()
         time.sleep(4)
 
     pi.stop()

@@ -13,15 +13,15 @@ class Switch:
             exit()
 
         self.pin_switch = pin_switch
-        pi.set_mode(self.pin_switch, pigpio.INPUT)
-        pi.set_pull_up_down(self.pin_switch, pigpio.PUD_DOWN)
+        self.pi.set_mode(self.pin_switch, pigpio.INPUT)
+        self.pi.set_pull_up_down(self.pin_switch, pigpio.PUD_DOWN)
 
         self._prevprev = 0
         self._prev = 0
         self._curr = 0
 
     def read(self):
-        tmp = pi.read(self.pin_switch)
+        tmp = self.pi.read(self.pin_switch)
 
         # Only update value if read value is different from old current value
         if (self._curr != tmp):
@@ -33,12 +33,12 @@ class Switch:
 
     def toggled(self):
         self.read()
-        if (self._prevprev == self._curr and self._prevprev != self.prev):
+        if (self._prevprev == self._curr and self._prevprev != self._prev):
             if (self._curr == 0):
                 # Reset to prevent multiple toggles
                 self._prevprev = self._prev
-
-                return 1
+                #return 1
+                return False
             elif (self._curr == 1):
                 # Reset to prevent multiple toggles
                 self._prevprev = self._prev
@@ -57,6 +57,6 @@ if __name__ == '__main__':
         while(True):
             print(s.read())
             print(s.toggled())
-            time.sleep(0.1)  # 100 ms
+            time.sleep(0.25)  # 100 ms
     except (KeyboardInterrupt):
         pi.stop()
