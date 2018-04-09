@@ -36,7 +36,7 @@ SERVO_0_CLOSE = 73  # angle at which flap 0 is closed
 SERVO_0_OPEN = -45  # angle at which flap 0 is opened
 
 SERVO_1_PWM = 27  # pin for servo 1
-SERVO_1_CLOSE = 73  # angle at which flap 1 is closed
+SERVO_1_CLOSE = 76  # angle at which flap 1 is closed
 SERVO_1_OPEN = -45  # angle at which flap 1 is opened
 
 SERVO_2_PWM = 0  # pin for servo 2

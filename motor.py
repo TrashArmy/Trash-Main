@@ -74,7 +74,7 @@ class Motor:
 if __name__ == '__main__':
     pi = pigpio.pi()
 
-    m = Motor(pi, 5, 6, 13)
+    m = Motor(pi, 13, 5, 6)
     m.speed(1)
     time.sleep(5)
     m.speed(-1)
