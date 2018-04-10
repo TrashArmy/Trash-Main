@@ -5,18 +5,17 @@ Controls everything from here
 import time
 import pigpio
 import MySQLdb
-# if not found, do:
+# if MySQLdb not found, do:
 # sudo apt-get install mysql-server
 # sudo apt-get install mysql-client
 # sudo apt-get install python-mysqldb
 import motor  # motor controller
 import servo_HS805BB  # servo controller
-#import light  # light controller
+# import light  # light controller
 import sonar  # ultrasonic sensor controller
 import switch  # switch controller
 import os
-import shutil
-
+# import shutil
 import CaptureImage
 
 # Configuration
@@ -29,10 +28,11 @@ MYSQL_TABLE = 'TrashData'
 
 TRASHCAN_ID = 0  # id of trashcan
 
-SERVO_EN = False
-ACTUATOR_EN = False
+SERVO_EN = True
+ACTUATOR_EN = True
 LIGHT_EN = False
-SONAR_EN = False
+CAMERA_EN = True
+SONAR_EN = True
 DOOR_SWITCH_EN = True
 
 SERVO_0_PWM = 22  # pin for servo 0
@@ -76,7 +76,9 @@ SONAR_3_MAX = 25  # max distance for 0% [cm]
 DOOR_SWITCH_PIN = 26  # pin for switch on door
 
 CONST_DATADIR = "./images/"
+
 # Define functions
+
 
 def sonar_ping(id, s, conn, dmin, dmax):
     p = 0
@@ -100,6 +102,7 @@ def sonar_ping(id, s, conn, dmin, dmax):
         print('insert failed')
         conn.rollback()
 
+
 def validateDir(name):
     # Returns dire
     if not os.path.exists(name):
@@ -108,24 +111,25 @@ def validateDir(name):
         i = 1
         temp = name
         while i < 200 and os.path.exists(name):
-            name = temp + "_" + str(i);
+            name = temp + "_" + str(i)
             i += 1
         if i == 200:
             raise Exception("Name value exceeding limit")
     return name
 
+
 def getDataDir(name):
     '''
     Creates a folder with any name in the directory
     '''
-    name = CONST_DATADIR + name;
+    name = CONST_DATADIR + name
     name = validateDir(name)
     os.makedirs(name)
     return name
 
 
 def getDataFolderName():
-    return strftime("%Y%m%d", time.gmtime())
+    return time.strftime("%Y%m%d", time.gmtime())
 
 # Main
 if __name__ == '__main__':
@@ -148,7 +152,6 @@ if __name__ == '__main__':
     if DOOR_SWITCH_EN:
         DOOR_SWITCH = switch.Switch(pi, DOOR_SWITCH_PIN)
 
-
     if SERVO_EN:
         SERVO_0 = servo_HS805BB.Servo_HS805BB(pi, SERVO_0_PWM)
         SERVO_1 = servo_HS805BB.Servo_HS805BB(pi, SERVO_1_PWM)
@@ -168,8 +171,9 @@ if __name__ == '__main__':
         SONAR_2 = sonar.Sonar(pi, SONAR_2_TRIG, SONAR_2_ECHO)
         SONAR_3 = sonar.Sonar(pi, SONAR_3_TRIG, SONAR_3_ECHO)
 
-    # Create and Get Data folder
+    # Create and get data folder
     data_path = getDataDir(getDataFolderName())
+    image_count = 0
 
     # Do stuff
     try:
@@ -190,13 +194,12 @@ if __name__ == '__main__':
             # At this point in the controller, we should be able to call
             # the alogirthm like this:
             # trash_id = algorithm()  # should return a 0, 1, 2, or 3
-            image_count = 0
-            image_file = CaptureImage.capture(data_path, str(image_count))
-            image_count += 1
-
-
-
-            trash_id = 1
+            if CAMERA_EN:
+                image_file = CaptureImage.capture(data_path, str(image_count))
+                image_count += 1
+                trash_id = 1
+            else:
+                trash_id = 1
 
             # Now that the trash is identified, open the correct flap.
             if SERVO_EN:
@@ -239,12 +242,33 @@ if __name__ == '__main__':
                     sonar_ping(2, SONAR_2, conn, SONAR_2_MIN, SONAR_2_MAX)
                 else:
                     sonar_ping(3, SONAR_3, conn, SONAR_3_MIN, SONAR_3_MAX)
+
+            # Power off servos until needed again
+            if SERVO_EN:
+                SERVO_0.off()
+                SERVO_1.off()
+                SERVO_2.off()
+
+            # Set actuator speed to zero
+            if ACTUATOR_EN:
+                ACTUATOR.speed(0)
     except KeyboardInterrupt:
+        if ACTUATOR_EN:
+            ACTUATOR.speed(0)
+
+        if SERVO_EN:
+            SERVO_0.off()
+            SERVO_1.off()
+            SERVO_2.off()
+
         if SONAR_EN:
             SONAR_0.cancel()
             SONAR_1.cancel()
             SONAR_2.cancel()
             SONAR_3.cancel()
+
+        conn.close()
+        pi.stop()
 
     conn.close()
     pi.stop()
