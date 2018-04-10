@@ -14,6 +14,10 @@ import servo_HS805BB  # servo controller
 #import light  # light controller
 import sonar  # ultrasonic sensor controller
 import switch  # switch controller
+import os
+import shutil
+
+import CaptureImage
 
 # Configuration
 MYSQL_HOST = '159.203.125.202'
@@ -71,7 +75,7 @@ SONAR_3_MAX = 25  # max distance for 0% [cm]
 
 DOOR_SWITCH_PIN = 26  # pin for switch on door
 
-
+CONST_DATADIR = "./images/"
 # Define functions
 
 def sonar_ping(id, s, conn, dmin, dmax):
@@ -96,8 +100,34 @@ def sonar_ping(id, s, conn, dmin, dmax):
         print('insert failed')
         conn.rollback()
 
-# Main
+def validateDir(name):
+    # Returns dire
+    if not os.path.exists(name):
+        return name
+    else:
+        i = 1
+        temp = name
+        while i < 200 and os.path.exists(name):
+            name = temp + "_" + str(i);
+            i += 1
+        if i == 200:
+            raise Exception("Name value exceeding limit")
+    return name
 
+def getDataDir(name):
+    '''
+    Creates a folder with any name in the directory
+    '''
+    name = CONST_DATADIR + name;
+    name = validateDir(name)
+    os.makedirs(name)
+    return name
+
+
+def getDataFolderName():
+    return strftime("%Y%m%d", time.gmtime())
+
+# Main
 if __name__ == '__main__':
     # Initialization
     pi = pigpio.pi()
@@ -117,7 +147,7 @@ if __name__ == '__main__':
 
     if DOOR_SWITCH_EN:
         DOOR_SWITCH = switch.Switch(pi, DOOR_SWITCH_PIN)
-        
+
 
     if SERVO_EN:
         SERVO_0 = servo_HS805BB.Servo_HS805BB(pi, SERVO_0_PWM)
@@ -138,6 +168,9 @@ if __name__ == '__main__':
         SONAR_2 = sonar.Sonar(pi, SONAR_2_TRIG, SONAR_2_ECHO)
         SONAR_3 = sonar.Sonar(pi, SONAR_3_TRIG, SONAR_3_ECHO)
 
+    # Create and Get Data folder
+    data_path = getDataDir(getDataFolderName())
+
     # Do stuff
     try:
         while(True):
@@ -145,7 +178,6 @@ if __name__ == '__main__':
                 while(not DOOR_SWITCH.toggled()):
                     time.sleep(0.100)  # sleep 100 ms
             print('Door toggled')
-
             # Front door opened and closed; assume trash is on platform, and
             # begin computer vision algorithm below.
 
@@ -158,6 +190,12 @@ if __name__ == '__main__':
             # At this point in the controller, we should be able to call
             # the alogirthm like this:
             # trash_id = algorithm()  # should return a 0, 1, 2, or 3
+            image_count = 0
+            image_file = CaptureImage.capture(data_path, str(image_count))
+            image_count += 1
+
+
+
             trash_id = 1
 
             # Now that the trash is identified, open the correct flap.
