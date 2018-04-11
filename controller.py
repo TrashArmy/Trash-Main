@@ -4,6 +4,7 @@ Controls everything from here
 """
 import time
 import pigpio
+# import picamera
 import MySQLdb
 # if MySQLdb not found, do:
 # sudo apt-get install mysql-server
@@ -11,7 +12,7 @@ import MySQLdb
 # sudo apt-get install python-mysqldb
 import motor  # motor controller
 import servo_HS805BB  # servo controller
-# import light  # light controller
+import light  # light controller
 import sonar  # ultrasonic sensor controller
 import switch  # switch controller
 import os
@@ -30,50 +31,50 @@ TRASHCAN_ID = 0  # id of trashcan
 
 SERVO_EN = True
 ACTUATOR_EN = True
-LIGHT_EN = False
+LIGHT_EN = True
 CAMERA_EN = True
 SONAR_EN = True
 DOOR_SWITCH_EN = True
 
-SERVO_0_PWM = 22  # pin for servo 0
+SERVO_0_PWM = 23  # pin for servo 0
 SERVO_0_CLOSE = 73  # angle at which flap 0 is closed
 SERVO_0_OPEN = -45  # angle at which flap 0 is opened
 
-SERVO_1_PWM = 27  # pin for servo 1
+SERVO_1_PWM = 24  # pin for servo 1
 SERVO_1_CLOSE = 76  # angle at which flap 1 is closed
 SERVO_1_OPEN = -45  # angle at which flap 1 is opened
 
-SERVO_2_PWM = 0  # pin for servo 2
+SERVO_2_PWM = 12  # pin for servo 2
 SERVO_2_CLOSE = 20  # angle at which flap 2 is closed
 SERVO_2_OPEN = -75  # angle at which flap 2 is opened
 
-ACTUATOR_PWM = 0  # pin for speed control of linear actuator
-ACTUATOR_FWD = 0  # pin for fwd control of linear actuator
-ACTUATOR_REV = 0  # pin for rev control of linear actuator
+ACTUATOR_PWM = 16  # pin for speed control of linear actuator
+ACTUATOR_FWD = 21  # pin for fwd control of linear actuator
+ACTUATOR_REV = 20  # pin for rev control of linear actuator
 
-LIGHT_PIN = 0  # pin for light
+LIGHT_PIN = 18  # pin for light
 
-SONAR_0_ECHO = 20  # pin for sonar sensor 1 echo
-SONAR_0_TRIG = 21  # pin for sonar sensor 1 trigger
-SONAR_0_MIN = 6  # min distance for 100% [cm]
-SONAR_0_MAX = 25  # max distance for 0% [cm]
+SONAR_0_ECHO = 17  # pin for sonar sensor 1 echo
+SONAR_0_TRIG = 27  # pin for sonar sensor 1 trigger
+SONAR_0_MIN = 46  # min distance for 100% [cm]
+SONAR_0_MAX = 146  # max distance for 0% [cm]
 
-SONAR_1_ECHO = 0  # pin for sonar sensor 2 echo
-SONAR_1_TRIG = 0  # pin for sonar sensor 2 trigger
-SONAR_1_MIN = 6  # min distance for 100% [cm]
-SONAR_1_MAX = 25  # max distance for 0% [cm]
+SONAR_1_ECHO = 22  # pin for sonar sensor 2 echo
+SONAR_1_TRIG = 5  # pin for sonar sensor 2 trigger
+SONAR_1_MIN = 29.7  # min distance for 100% [cm]
+SONAR_1_MAX = 37  # max distance for 0% [cm]
 
-SONAR_2_ECHO = 0  # pin for sonar sensor 3 echo
-SONAR_2_TRIG = 0  # pin for sonar sensor 3 trigger
-SONAR_2_MIN = 6  # min distance for 100% [cm]
-SONAR_2_MAX = 25  # max distance for 0% [cm]
+SONAR_2_ECHO = 6  # pin for sonar sensor 3 echo
+SONAR_2_TRIG = 13  # pin for sonar sensor 3 trigger
+SONAR_2_MIN = 10.8  # min distance for 100% [cm]
+SONAR_2_MAX = 121  # max distance for 0% [cm]
 
-SONAR_3_ECHO = 0  # pin for sonar sensor 4 echo
-SONAR_3_TRIG = 0  # pin for sonar sensor 4 trigger
-SONAR_3_MIN = 6  # min distance for 100% [cm]
-SONAR_3_MAX = 25  # max distance for 0% [cm]
+SONAR_3_ECHO = 19  # pin for sonar sensor 4 echo
+SONAR_3_TRIG = 26  # pin for sonar sensor 4 trigger
+SONAR_3_MIN = 5.5  # min distance for 100% [cm]
+SONAR_3_MAX = 95.8  # max distance for 0% [cm]
 
-DOOR_SWITCH_PIN = 26  # pin for switch on door
+DOOR_SWITCH_PIN = 4  # pin for switch on door
 
 CONST_DATADIR = "./images/"
 
@@ -90,7 +91,7 @@ def sonar_ping(id, s, conn, dmin, dmax):
     else:
         p = round(((dmax-r)/(dmax-dmin))*100)
 
-    print('id: {}, fill: {}%'.format(id, p))
+    print('id: {}, fill: {}%, value: {}'.format(id, p, r))
 
     cursor = conn.cursor()
     sql = "INSERT INTO {0} VALUES({1}, {2}, NOW(), {3}, 0);".format(
@@ -151,6 +152,10 @@ if __name__ == '__main__':
 
     if DOOR_SWITCH_EN:
         DOOR_SWITCH = switch.Switch(pi, DOOR_SWITCH_PIN)
+        
+    if LIGHT_EN:
+        LIGHT = light.Light(LIGHT_PIN)
+        LIGHT.off()
 
     if SERVO_EN:
         SERVO_0 = servo_HS805BB.Servo_HS805BB(pi, SERVO_0_PWM)
@@ -160,6 +165,10 @@ if __name__ == '__main__':
         SERVO_0.degree(SERVO_0_CLOSE)
         SERVO_1.degree(SERVO_1_CLOSE)
         SERVO_2.degree(SERVO_2_CLOSE)
+        
+        SERVO_0.off()
+        SERVO_1.off()
+        SERVO_2.off()
 
     if ACTUATOR_EN:
         ACTUATOR = motor.Motor(pi, ACTUATOR_PWM, ACTUATOR_FWD, ACTUATOR_REV)
@@ -174,10 +183,12 @@ if __name__ == '__main__':
     # Create and get data folder
     data_path = getDataDir(getDataFolderName())
     image_count = 0
+    LIGHT = light.Light(LIGHT_PIN)
 
     # Do stuff
     try:
         while(True):
+            print('Ready...')
             if DOOR_SWITCH_EN:
                 while(not DOOR_SWITCH.toggled()):
                     time.sleep(0.100)  # sleep 100 ms
@@ -194,12 +205,19 @@ if __name__ == '__main__':
             # At this point in the controller, we should be able to call
             # the alogirthm like this:
             # trash_id = algorithm()  # should return a 0, 1, 2, or 3
+            if LIGHT_EN:
+                LIGHT.on()
+                time.sleep(0.2)
+            
             if CAMERA_EN:
                 image_file = CaptureImage.capture(data_path, str(image_count))
                 image_count += 1
                 trash_id = 1
             else:
-                trash_id = 1
+                trash_id = 3
+                
+            if LIGHT_EN:
+                LIGHT.off()
 
             # Now that the trash is identified, open the correct flap.
             if SERVO_EN:
