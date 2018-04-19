@@ -1,6 +1,4 @@
 import picamera
-# import os
-import light
 
 
 def capture(data_path, image_name):
