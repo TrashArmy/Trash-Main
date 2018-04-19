@@ -176,7 +176,7 @@ detection_graph = getDetectionGraph()
 
 while (1):
     #inp = input("Input your image path: ")
-    inp = 'C:/Users/sagar/Documents/TrashArmy/Trash-Main/object_detection/real_images/image10.jpg'
+    inp = './object_detection/real_images/image10.jpg'
     if str(inp) == 'q':
         break
     try:
