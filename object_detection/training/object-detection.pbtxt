@@ -1,0 +1,41 @@
+item {
+	id: 1
+	name:'plastic_box'
+}
+item {
+	id: 2
+	name:'alumimum_foil'
+}
+item {
+	id: 3
+	name:'cardboard'
+}
+item {
+	id: 4
+	name:'lid'
+}
+item {
+	id: 5
+	name:'bottlecrown'
+}
+item {
+	id: 6
+	name:'bottlecap'
+}
+item {
+	id: 7
+	name: 'plastic'
+}
+item {
+	id: 8
+	name: 'plastic_cup'
+}
+item {
+	id: 9
+	name: 'paper'
+}
+item {
+	id: 10
+	name: 'aluminum_can'
+}
+
