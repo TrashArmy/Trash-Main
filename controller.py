@@ -281,9 +281,9 @@ if __name__ == '__main__':
                 try:
                     image_file = CaptureImage.capture(data_path, str(image_count))
                     image_count += 1
-                else:
-                    print ("Image could not be taken")
-                    continue
+                except:
+					print ("Image could not be taken")
+					continue
             if LIGHT_EN:
                 LIGHT.off()
 
