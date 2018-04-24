@@ -100,7 +100,7 @@ PATH_TO_CKPT = MODEL_FOLDER_NAME + '/retrained_graph.pb'
 PATH_TO_LABELS = os.path.join('mobilenet_model', 'retrained_labels.txt')
 NUM_CLASSES = 4 # Number of classes classifier has
 CLASSIFICATION_DICT = {"aluminum can": 3, "plastic cup": 2, "plastic bottle": 2,
-                        "paper cup": 0}
+                        "paper cup": 0,  "non recyclables": 1, "paper cup holder": 0, "plastic cup lid": 2}
 INPUT_HEIGHT = 224
 INPUT_WIDTH = 224
 INPUT_STD = 128
