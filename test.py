@@ -11,7 +11,8 @@ ACTUAL_LABELS_FOR_TEST = [
     "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can",
     "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can", "plastic cup",
     "plastic cup", "plastic cup", "plastic cup", "plastic cup", "plastic cup", "plastic cup", "plastic cup", "plastic cup",
-    "plastic cup"
+    "plastic cup", "paper cup holder", "paper cup holder", "paper cup holder", "plastic cup lid", "plastic cup lid", "plastic cup lid",
+    "non recyclables", "non recyclables"
 ]
 
 def load_graph(model_file):
@@ -67,9 +68,12 @@ def get_classified_result():
                             "paper cup": 0}
     uu = 0
     start = time.time()
-    for i in range(1, 44):
-        file_name = image_name_base + str(i) + '.jpg'
-        image_tensor = read_tensor_from_image_file(file_name, input_height=input_height, input_width=input_width, input_mean=input_mean, input_std=input_std)
+    for i in range(1, 52):
+        try :
+            file_name = image_name_base + str(i) + '.jpg'
+            image_tensor = read_tensor_from_image_file(file_name, input_height=input_height, input_width=input_width, input_mean=input_mean, input_std=input_std)
+        except:
+            continue
         input_name = "import/" + input_layer
         output_name = "import/" + output_layer
         input_operation = graph.get_operation_by_name(input_name);
@@ -85,9 +89,12 @@ def get_classified_result():
         #print ((labels[top_k])==ACTUAL_LABELS_FOR_TEST[i - 1])
         if (labels[top_k]==ACTUAL_LABELS_FOR_TEST[i - 1]):
             uu += 1
+        else:
+            print (file_name)
+            print (ACTUAL_LABELS_FOR_TEST[i - 1])
     end = time.time()
     print (uu)
-    print (uu * 100/43)
+    print (uu * 100/51)
     print (end - start)
 
 get_classified_result()
