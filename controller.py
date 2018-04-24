@@ -29,13 +29,6 @@ from io import StringIO
 from matplotlib import pyplot as plt
 from PIL import Image
 
-sys.path.append('./object_detection')
-from object_detection.utils import ops as utils_ops
-if tf.__version__ < '1.4.0':
-  raise ImportError('Please upgrade your tensorflow installation to v1.4.* or later!')
-from object_detection.utils import label_map_util
-
-
 
 #Importing Our Custom Packages
 import CaptureImage
@@ -100,14 +93,20 @@ DOOR_SWITCH_PIN = 4  # pin for switch on door
 
 IMAGE_DIR = "./images/"
 
-MODEL_FOLDER_NAME = 'classification_model'
+MODEL_FOLDER_NAME = './mobilenet_model'
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
-PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
+PATH_TO_CKPT = MODEL_FOLDER_NAME + '/retrained_graph.pb'
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join('classification_model', 'label_map.pbtxt')
+PATH_TO_LABELS = os.path.join('mobilenet_model', 'retrained_labels.txt')
 NUM_CLASSES = 4 # Number of classes classifier has
-CLASSIFICATION_DICT = {"aluminum_can": 3, "plastic_cup": 2, "plastic_bottle": 2,
-                        "paper_cup": 0}
+CLASSIFICATION_DICT = {"aluminum can": 3, "plastic cup": 2, "plastic bottle": 2,
+                        "paper cup": 0}
+INPUT_HEIGHT = 224
+INPUT_WIDTH = 224
+INPUT_STD = 128
+INPUT_MEAN = 128
+INPUT_LAYER = "input"
+OUTPUT_LAYER = "final_result"
 # Define functions
 
 
@@ -158,33 +157,45 @@ def getDataDir(name):
     os.makedirs(name)
     return name
 
-
 def getDataFolderName():
     return time.strftime("%Y%m%d", time.gmtime())
 
-def loadImageIntoNumpyArray(image):
-  (im_width, im_height) = image.size
-  return np.array(image.getdata()).reshape(
-      (im_height, im_width, 3)).astype(np.uint8)
+def load_graph(model_file):
+    graph = tf.Graph()
+    graph_def = tf.GraphDef()
+    with open(model_file, "rb") as f:
+        graph_def.ParseFromString(f.read())
+        with graph.as_default():
+            tf.import_graph_def(graph_def)
+    return graph
 
-def getLabelMapCategories():
-    label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
-    categories = label_map_util.convert_label_map_to_categories(label_map,
-        max_num_classes=NUM_CLASSES, use_display_name=True)
-    category_index = label_map_util.create_category_index(categories)
-    return category_index
+def read_tensor_from_image_file(file_name, input_height=299, input_width=299, input_mean=0, input_std=255):
+    input_name = "file_reader"
+    output_name = "normalized"
+    file_reader = tf.read_file(file_name, input_name)
+    if file_name.endswith(".png"):
+        image_reader = tf.image.decode_png(file_reader, channels = 3, name='png_reader')
+    elif file_name.endswith(".gif"):
+        image_reader = tf.squeeze(tf.image.decode_gif(file_reader, name='gif_reader'))
+    elif file_name.endswith(".bmp"):
+        image_reader = tf.image.decode_bmp(file_reader, name='bmp_reader')
+    else:
+        image_reader = tf.image.decode_jpeg(file_reader, channels = 3, name='jpeg_reader')
+    float_caster = tf.cast(image_reader, tf.float32)
+    dims_expander = tf.expand_dims(float_caster, 0);
+    resized = tf.image.resize_bilinear(dims_expander, [input_height, input_width])
+    normalized = tf.divide(tf.subtract(resized, [input_mean]), [input_std])
+    sess = tf.Session()
+    result = sess.run(normalized)
+    return result
 
 
-def getDetectionGraph():
-    detection_graph = tf.Graph()
-    with detection_graph.as_default():
-      od_graph_def = tf.GraphDef()
-      with tf.gfile.GFile(PATH_TO_CKPT, 'rb') as fid:
-        serialized_graph = fid.read()
-        od_graph_def.ParseFromString(serialized_graph)
-        tf.import_graph_def(od_graph_def, name='')
-    return detection_graph
-
+def load_labels(label_file):
+    label = []
+    proto_as_ascii_lines = tf.gfile.GFile(label_file).readlines()
+    for l in proto_as_ascii_lines:
+        label.append(l.rstrip())
+    return label
 
 # Main
 if __name__ == '__main__':
@@ -240,7 +251,8 @@ if __name__ == '__main__':
     LIGHT = light.Light(LIGHT_PIN)
 
     # Loading Frozen Tensorflow model into memory
-    detection_graph = getDetectionGraph()
+    graph = load_graph(PATH_TO_CKPT)
+    labels = load_labels(PATH_TO_LABELS)
 
     # Do stuff
     try:
@@ -275,34 +287,20 @@ if __name__ == '__main__':
             if LIGHT_EN:
                 LIGHT.off()
 
-            image_np = load_image_into_numpy_array(Image.open(image_file))
-            image_np = np.expand_dims(image_np, 0)
-            with detection_graph.as_default():
-                with tf.Session() as sess:
-                    # Get handles to input and output tensors
-                    ops = tf.get_default_graph().get_operations()
-                    all_tensor_names = {output.name for op in ops for output in op.outputs}
-                    tensor_dict = {}
-                    for key in ['detection_scores', 'detection_classes']:
-                        tensor_name = key + ':0'
-                        if tensor_name in all_tensor_names:
-                            tensor_dict[key] = tf.get_default_graph().get_tensor_by_name(
-                                tensor_name)
-                    image_tensor = tf.get_default_graph().get_tensor_by_name('image_tensor:0')
-                    # Run inference
-                    start = time.time()
-                    output_dict = sess.run(tensor_dict, feed_dict={image_tensor: image_np})
-                    end = time.time()
-                    print (end - start)
-                    # all outputs are float32 numpy arrays, so convert types as appropriate
-                    output_dict['detection_classes'] = output_dict['detection_classes'][0].astype(np.uint8)
-                    #output_dict['detection_boxes'] = output_dict['detection_boxes'][0]
-                    output_dict['detection_scores'] = output_dict['detection_scores'][0]
-
-            max_detect = np.argmax(output_dict['detection_scores'])
-            if (output_dict['detection_scores'][max_detect] > 0.5):
-                max_class = (output_dict['detection_classes'])[max_detect]
-                trash_id = CLASSIFICATION_DICT[category_index[max_class]['name']]
+            image_tensor = read_tensor_from_image_file(image_file, input_height=input_height, input_width=input_width, input_mean=input_mean, input_std=input_std)
+            input_name = "import/" + INPUT_LAYER
+            output_name = "import/" + OUTPUT_LAYER
+            input_operation = graph.get_operation_by_name(input_name);
+            output_operation = graph.get_operation_by_name(output_name);
+            with tf.Session(graph=graph) as sess:
+                start = time.time()
+                results = sess.run(output_operation.outputs[0], {input_operation.outputs[0]: image_tensor})
+                end=time.time()
+            results = np.squeeze(results)
+            top_k = results.argsort()[-5:][::-1]
+            top_k = top_k[0]
+            if (results[top_k] > 0.6):
+                trash_id = CLASSIFICATION_DICT.get(labels[top_k])
             else:
                 trash_id = 1
             # Now that the trash is identified, open the correct flap.
