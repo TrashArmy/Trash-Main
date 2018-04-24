@@ -4,6 +4,16 @@ import time
 import numpy as np
 import tensorflow as tf
 
+ACTUAL_LABELS_FOR_TEST = [
+    "paper cup", "paper cup", "paper cup", "paper cup", "paper cup", "paper cup", "paper cup", "paper cup",
+    "plastic bottle", "plastic bottle", "plastic bottle", "plastic bottle", "plastic bottle", "plastic bottle",
+    "plastic bottle", "plastic bottle", "plastic bottle", "plastic bottle", "aluminum can", "aluminum can",
+    "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can",
+    "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can", "aluminum can", "plastic cup",
+    "plastic cup", "plastic cup", "plastic cup", "plastic cup", "plastic cup", "plastic cup", "plastic cup", "plastic cup",
+    "plastic cup"
+]
+
 def load_graph(model_file):
     graph = tf.Graph()
     graph_def = tf.GraphDef()
@@ -55,6 +65,8 @@ def get_classified_result():
     labels = load_labels(path_to_labels)
     CLASSIFICATION_DICT = {"aluminum can": 3, "plastic cup": 2, "plastic bottle": 2,
                             "paper cup": 0}
+    uu = 0
+    start = time.time()
     for i in range(1, 44):
         file_name = image_name_base + str(i) + '.jpg'
         image_tensor = read_tensor_from_image_file(file_name, input_height=input_height, input_width=input_width, input_mean=input_mean, input_std=input_std)
@@ -69,6 +81,13 @@ def get_classified_result():
         results = np.squeeze(results)
         top_k = results.argsort()[-5:][::-1]
         top_k = top_k[0]
-        print (CLASSIFICATION_DICT.get(labels[top_k]))
+        #print ((labels[top_k]), ACTUAL_LABELS_FOR_TEST[i- 1])
+        #print ((labels[top_k])==ACTUAL_LABELS_FOR_TEST[i - 1])
+        if (labels[top_k]==ACTUAL_LABELS_FOR_TEST[i - 1]):
+            uu += 1
+    end = time.time()
+    print (uu)
+    print (uu * 100/43)
+    print (end - start)
 
 get_classified_result()
