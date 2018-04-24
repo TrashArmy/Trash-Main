@@ -281,13 +281,13 @@ if __name__ == '__main__':
                 try:
                     image_file = CaptureImage.capture(data_path, str(image_count))
                     image_count += 1
-                else:
-                    print ("Image could not be taken")
-                    continue
+                except:
+					print ("Image could not be taken")
+					continue
             if LIGHT_EN:
                 LIGHT.off()
 
-            image_tensor = read_tensor_from_image_file(image_file, input_height=input_height, input_width=input_width, input_mean=input_mean, input_std=input_std)
+            image_tensor = read_tensor_from_image_file(image_file, input_height=INPUT_HEIGHT, input_width=INPUT_HEIGHT, input_mean=INPUT_MEAN, input_std=INPUT_STD)
             input_name = "import/" + INPUT_LAYER
             output_name = "import/" + OUTPUT_LAYER
             input_operation = graph.get_operation_by_name(input_name);
@@ -299,6 +299,7 @@ if __name__ == '__main__':
             results = np.squeeze(results)
             top_k = results.argsort()[-5:][::-1]
             top_k = top_k[0]
+            print (labels[top_k])
             if (results[top_k] > 0.6):
                 trash_id = CLASSIFICATION_DICT.get(labels[top_k])
             else:
